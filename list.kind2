@@ -338,13 +338,7 @@ List.take a (Nil t)            (Succ n) = Nil
 List.take a (Cons t head tail) (Succ n) = (Cons t head (List.take a tail n))
 
 
-//Zips two lists in a List of Pairs, pairing values twogether
-//example: (List.zip Nat Bool [1,2] [True, False] -> [(1, True), (2, False)] 
-List.zip <a> <b> (xs: (List a)) (ys: (List b)) : (List (Pair a b))
-List.zip a b xs            (Nil t)                     = Nil
-//List.zip a b (Nil t)       ys                            = Nil
-List.zip a b (Cons t xhead xtail) (Cons t yhead ytail) = 
-
+//TODO: List Zip
 
 
 
