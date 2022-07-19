@@ -1,0 +1,378 @@
+//List Type
+List (a: Type)                      : Type
+Nil <a>                             : (List a)
+Cons <a> (head: a) (tail: (List a)) : (List a)
+
+
+// Maybe Type
+Maybe (a: Type)     : Type
+None <a>            : (Maybe a)
+Some <a> (value: a) : (Maybe a)
+
+
+// Bool Type
+Bool  : Type
+True  : Bool
+False : Bool
+
+// Nat Type
+Nat              : Type
+Zero             : Nat
+Succ (pred: Nat) : Nat
+
+//Pair Type
+Pair (a: Type) (b: Type)       : Type
+Dyad <a> <b> (fst: a) (snd: b) : (Pair a b)
+
+////String Type
+//String                           : Type
+//Nil                              : String
+//Cons (head: Char) (tail: String) : String
+
+//Bool Functions
+//-----------------------------------------------------
+
+Bool.if <a: Type> (b: Bool) (t: a) (f: a) : a
+Bool.if a True  t f = t
+Bool.if a False t f = f
+
+  
+Bool.and (a: Bool) (b: Bool) : Bool
+Bool.and True  True  = True
+Bool.and True  False = False
+Bool.and False True  = False
+Bool.and False False = False
+
+
+Bool.eql (a: Bool) (b: Bool) : Bool
+Bool.eql True  True  = True
+Bool.eql True  False = False
+Bool.eql False True  = False
+Bool.eql False False = True
+//-----------------------------------------------------
+
+
+//List Functions
+//-----------------------------------------------------
+////Negates all element of a Bool list
+//List.negate (xs: (List Bool))   : (List Bool)
+//List.negate (Nil Bool)            = (Nil Bool)
+//List.negate (Cons Bool head tail) = (Cons Bool (Bool.not head) (List.negate tail))
+
+
+//Applies a function f to all elements of a list
+//example: (List.map [1,2,3,4] (Nat.add 1)) -> [2,3,4,5]
+List.map <a> <b> (x: (List a)) (f: (x: a) b) : (List b)
+List.map a b (Nil t)            f = (Nil b)
+List.map a b (Cons t head tail) f = (Cons b (f head) (List.map a b tail f))
+
+
+//Gets the head of the list if there is some
+//example: (List.head Nat [1,2,3]) -> (Some 1)
+List.head <a> (xs: (List a)) : (Maybe a)
+List.head a (Nil t)            = None
+List.head a (Cons t head tail) = (Some head)
+
+
+//Gets the tail of the list
+//example: (List.tail Nat [1,2,3]) -> [2,3]
+List.tail <a> (xs: (List a)) : (List a)
+List.tail a (Nil t)            = Nil
+List.tail a (Cons t head tail) = tail
+
+
+//Given a condition, verifies if all elements of that list matches that
+//condition
+//example: (List.all Nat [1,2,3,4] (Nat.eql 3)) -> False
+List.all <a> (xs: (List a)) (cond: (x: a) Bool) : Bool
+List.all a (Nil t)            cond = True
+List.all a (Cons t head tail) cond = 
+  (Bool.if (cond head) (List.all a tail cond) False)
+
+
+//Given a condition, verifies if any element of that list matches that condition
+//example: (List.any Nat [1,2,3,4,5] (Nat.eql 4)) -> True
+List.any <a> (xs: (List a)) (cond: (x: a) Bool): Bool
+List.any a (Nil t)            cond = False
+List.any a (Cons t head tail) cond = (Bool.if (cond head) (True) (List.all a tail cond))
+
+
+//Given an index, returns the element in that index if any
+//example: (List.at Nat [1,2,3,4] 2) -> 3
+List.at <a> (xs: (List a)) (idx: Nat) : (Maybe a)
+List.at a (Nil t)            (idx)      = None 
+List.at a (Cons t head tail) (Zero)     = (Some head)
+List.at a (Cons t head tail) (Succ idx) = (List.at a tail idx)
+
+
+//Concatenates two lists
+//example: (concat [1,2] [3,4]) = [1, 2, 3, 4]
+List.concat <a> (xs: (List a)) (ys: (List a)) : (List a)
+List.concat a (Nil t)              ys = ys
+List.concat a (Cons t xhead xtail) ys = (Cons t xhead (List.concat xtail ys))
+
+
+//Returns the size of a list
+//example: (List.length [1,2,3]) -> 3
+List.length <a> (xs: (List a)) : Nat
+List.length a (Nil t)            = Zero
+List.length a (Cons t head tail) = (Succ (List.length tail))
+
+
+//Given a condition, verifies how many times that condition occurs
+//example: (List.occurrences Nat [1,2,1,3,1,4] (Nat.eql 1)) -> 3
+List.occurrences <a> (xs: (List a)) (cond: (x: a) Bool): Nat
+List.occurrences a (Nil t)            cond = Zero
+List.occurrences a (Cons t head tail) cond = 
+  let tail_count = (List.occurrences tail cond)
+  (Bool.if (cond head) (Succ (tail_count)) (tail_count))
+    
+
+//Deletes a value in a list in a given index
+//example: (List.delete_at Nat [1,2,3,4,5] 4) -> [1,2,3,4]
+List.delete_at <a> (xs: (List a)) (idx: Nat) : (List a)
+List.delete_at a (Nil t)            (Succ idx) = Nil
+List.delete_at a (Cons t head tail) Zero       = tail
+List.delete_at a (Cons t head tail) (Succ idx) = (Cons t head (List.delete_at tail idx))
+
+
+//Deletes all values in a list for a given condition
+//example: (List.delete_by Nat [1,2,1,3,1,4] (Nat.eql 1)) -> [2,3,4]
+List.delete_by <a> (xs: (List a)) (cond: (x: a) Bool) : (List a)
+List.delete_by a (Nil t)            cond = Nil
+List.delete_by a (Cons t head tail) cond = 
+  (Bool.if (cond head) (List.delete_by tail cond) (Cons t head (List.delete_by tail cond)))
+
+//Deletes the first value from a list that matches a given condition
+//example: (List.delete_first_el Nat [1,2,3,3,2,1] (Nat.eql 3)) -> [1,2,3,2,1]
+List.delete_first_el <a> (xs: (List a)) (cond: (x: a) Bool): (List a)
+List.delete_first_el a (Nil t)            cond = Nil
+List.delete_first_el a (Cons t head tail) cond = 
+  (Bool.if (cond head) tail (Cons t head (List.delete_first_el tail cond)))
+
+
+//Drops n elements of a list
+//example: (List.drop Nat [1,2,3,4] 2) -> [3,4]
+List.drop <a> (xs: (List a)) (n: Nat) : (List a)
+List.drop a xs                 Zero     = xs
+List.drop a (Cons t head tail) (Succ n) = (List.drop tail n)
+
+
+//Drops n elements while a given condition is true
+//example: (List.drop_while Nat [2,2,3,2,1,3,2,1] (Nat.eql 2)) - [3,2,1,3,2,1]
+List.drop_while <a> (xs: (List a)) (cond: (x: a) Bool) : (List a)
+List.drop_while a (Nil t)            cond = Nil
+List.drop_while a (Cons t head tail) cond = 
+  (Bool.if (cond head) (List.drop_while tail cond) tail)
+
+
+//Verifies orderly if two lists are equal
+//example: (List.equal Nat [1,2,3] [3,2,1] Nat.eql) -> False
+List.equal <a> (xs: (List a)) (ys: (List a)) (cond: (x: a) (y: a) Bool) : Bool
+List.equal a (Nil t)              (Nil t)              cond = True
+List.equal a (Nil t)              (Cons t yhead ytail) cond = False
+List.equal a (Cons t xhead xtail) (Nil t)              cond = False
+List.equal a (Cons t xhead xtail) (Cons t yhead ytail) cond = 
+  (Bool.and (cond xhead yhead) (List.equal xtail ytail cond))
+
+
+//Removes all elements of that list that doesn't satisfy a given condition
+//example: (List.filter Nat ([1,2,1,3,1,4] (Nat.eql 1)) -> [2,3,4]
+List.filter <a> (xs: (List a)) (cond: (x: a) Bool) : (List a)
+List.filter a (Nil t)            cond = Nil
+List.filter a (Cons t head tail) cond = 
+  (Bool.if (cond head) (Cons head (List.filter tail cond)) (List.filter tail cond))
+
+
+//Given a condition, if any, returns the first value for that given condition
+//example: (List.find Nat [1,2,3] (Nat.eql 4)) -> None)
+List.find <a> (xs: (List a)) (cond: (x: a) Bool) : (Maybe a)
+List.find a (Nil t)            cond = None
+List.find a (Cons t head tail) cond = 
+  (Bool.if (cond head) (Some head) (List.find tail cond))
+
+
+//Given a condition, if any, returns the index for the first value found within
+//that condition
+//example: (List.find_index Nat [1,2,3] (Nat.eql 3)) -> (Some 2)
+//-----------------------
+List.find_index <a> (xs: (List a)) (cond: (x: a) Bool) : (Maybe Nat)
+List.find_index a xs cond = (List.find_index_go xs cond Zero)
+
+//Auxiliary function for find_index
+List.find_index_go <a> (xs: (List a)) (cond: (x: a) Bool) (idx: Nat) : (Maybe Nat)
+List.find_index_go a (Nil t)            cond idx = None
+List.find_index_go a (Cons t head tail) cond idx = 
+  (Bool.if (cond head) (Some idx) (List.find_index_go  tail cond (Succ idx)))
+//------------------------
+
+
+
+//List to Church Encode
+List.fold <a> <p> (xs: (List a)) : p -> (a -> p -> p) -> p
+List.fold a p (Nil t)            = @nil @cons nil
+List.fold a p (Cons t head tail) = @nil @cons (cons head ((List.fold a p tail) nil cons))
+  
+
+
+//Runs the entire list applying a function to the head and an accumulator
+//example: (List.for [1,2,3] 0 Nat.add) -> 6
+List.for <a> <b> (xs: (List a)) (acum: b) (f: (n: a) (m: b) b) : b
+List.for a b (Nil t)            acum f = acum
+List.for a b (Cons t head tail) acum f =
+  (List.for tail (f head acum) f)
+
+
+
+//Gets a value based on a given index, if any.
+//example: (List.get Nat [1,2,3] 3) -> None
+List.get <a> (xs: (List a)) (idx: Nat) : (Maybe a)
+List.get a (Nil t)            Zero       = None
+List.get a (Nil t)            (Succ idx) = None
+List.get a (Cons t head tail) Zero       = (Some head)
+List.get a (Cons t head tail) (Succ idx) = (List.get a tail idx)
+
+
+
+//Returns a list of pairs with all values and their respective indexes
+//example: 
+  //(List.index_value Nat [1,2,3]) -> ([ Pair (0 1), Pair (1,2), Pair (2,3)]
+//--------------
+List.index_value <a> (xs: (List a)) : (List (Pair Nat a))
+List.index_value a xs = (List.index_value_go a xs Zero)
+
+
+
+//Auxiliary Function
+List.index_value_go <a> (xs: (List a)) (idx: Nat) : (List (Pair Nat a))
+List.index_value_go a (Nil t)            idx = Nil
+List.index_value_go a (Cons t head tail) idx = 
+  (Cons (Dyad idx head) (List.index_value_go a tail (Succ idx)))
+//--------------
+
+
+//Verifies if a list is empty
+//example: (List.is_empty Nat [1,2,3]) -> False
+List.is_empty <a> (xs: (List a)) : Bool
+List.is_empty a (Nil t)            = True
+List.is_empty a (Cons t head tail) = False
+
+
+
+//Given an index, applies a function to the value on that index in a list
+//example: (List.mut Nat [1,2,3] (Nat.add 2) 1) -> [1,4,3]
+List.mut <a> (xs: (List a)) (f: (v: a) a) (idx: Nat) : (List a)
+List.mut a (Nil t)            f idx        = Nil
+List.mut a (Cons t head tail) f Zero       = (Cons t (f head) tail)
+List.mut a (Cons t head tail) f (Succ idx) = (Cons t head (List.mut a tail f idx))
+
+
+//Given an index, removes that value from the list, returning the value and the
+//list without it, if any
+//example: (List.pop_at [1,2,3] 1) -> (Pair (Some 2) ([1,3]))
+//---------------
+List.pop_at <a> (xs: (List a)) (idx: Nat) : (Pair (Maybe a) (List a))
+List.pop_at a xs idx = (List.pop_at_go a xs Nil idx)
+
+//Auxiliar Function 
+List.pop_at_go <a> (xs: (List a)) (ys: (List a)) (idx: Nat) : (Pair (Maybe a) (List a))
+List.pop_at_go a (Nil t)            ys idx        = (Dyad None ys)
+List.pop_at_go a (Cons t head tail) ys Zero       = (Dyad None (List.concat a tail ys))
+List.pop_at_go a (Cons t head tail) ys (Succ idx) = (List.pop_at_go a tail (Cons t head ys) idx)
+//---------------
+
+
+//Given a number, creates a list within all values in that range
+//example: List.range 5 -> [5,4,3,2,1,0]
+//-----------------------------
+List.range (n: Nat) : (List Nat)
+List.range n = (List.range_go Nil n)
+
+//Auxiliar Function
+List.range_go (xs: (List Nat)) (n: Nat) : (List Nat)
+List.range_go  xs Zero     = (Cons Zero xs)
+List.range_go  xs (Succ n) = (Cons (Succ n) (List.range_go xs n))
+//-----------------------------
+
+
+
+//Repeats n times a value creating a list
+//example: (List.repeat 3 True) -> [True, True, True]
+List.repeat <a> (idx: Nat) (val: a) : (List a)
+List.repeat a Zero       val = Nil
+List.repeat a (Succ idx) val = (Cons val (List.repeat a idx val))
+
+
+//Reverts a List
+//example: (List.reverse [1,2,3]) -> [3,2,1]
+//-----------------------------
+List.reverse <a> (xs: (List a)) : (List a)
+List.reverse a xs = (List.reverse_go a xs Nil)
+
+//Auxiliar Function
+List.reverse_go <a> (xs: (List a)) (ys: (List a)) : (List a)
+List.reverse_go a (Nil t)            ys = ys
+List.reverse_go a (Cons t head tail) ys = (Cons head (List.reverse_go a tail ys))
+//-----------------------------
+
+
+
+//Given an index and a value, sets the value in that index in a list and returns
+//a modified list
+//example: (List.set [1,2,3] 4 2) -> [1,2,4]
+List.set <a> (xs: (List a)) (val: a) (idx: Nat) : (List a)
+List.set a (Nil t)            val idx        = Nil
+List.set a (Cons t head tail) val Zero       = (Cons t val tail)
+List.set a (Cons t head tail) val (Succ idx) = (Cons t head (List.set a tail val idx))
+
+//TODO: List show
+
+//TODO: List split
+
+
+//Takes n values from a list and returns a list
+//example: (List.get [1,2,3,4] 2) -> [1,2]
+List.take <a> (xs: (List a)) (n: Nat) : (List a)
+List.take a xs                 Zero     = Nil
+List.take a (Nil t)            (Succ n) = Nil
+List.take a (Cons t head tail) (Succ n) = (Cons t head (List.take a tail n))
+
+
+//Zips two lists in a List of Pairs, pairing values twogether
+//example: (List.zip Nat Bool [1,2] [True, False] -> [(1, True), (2, False)] 
+List.zip <a> <b> (xs: (List a)) (ys: (List b)) : (List (Pair a b))
+List.zip a b xs            (Nil t)                     = Nil
+//List.zip a b (Nil t)       ys                            = Nil
+List.zip a b (Cons t xhead xtail) (Cons t yhead ytail) = 
+
+
+
+
+
+Num    : Type
+Um     : Num
+Dois   : Num
+Tres   : Num
+Quatro : Num
+
+    
+Id (x: Bool) : Bool
+Id  x = x
+
+//Main: (List Nat) {
+  //let lista = (Cons True Nil)
+  //let val   = (Succ ( Succ ( Succ Zero )))
+  //let listb = (Cons False  (Cons True  Nil))
+  //let listc = (Cons True (Cons False (Cons True (Cons False (Cons True Nil)))))
+  //let listn = (Cons Um   ( Cons Dois Nil))
+  //let listm = (Cons Tres ( Cons Quatro Nil))
+  //(List.index_value listc)
+  //(List.range val)
+  //(List.equal (listc) (listb) @x @y (Bool.eql x y))
+  //(List.find_index listc @x(Id x))
+  //(List.delete_at (lista) (val))
+  //(List.length (listc))
+  //(List.concat (listn) (listm))
+  //(List.at (Cons True ( Cons True ( Cons False Nil))) (Succ(Succ Zero)) )
+//}
+
