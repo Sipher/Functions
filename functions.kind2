@@ -441,11 +441,10 @@ BitsMap.mut <a> (bits: Bits) (map: (BitsMap a)) (default: a) (f: (x: a) a) : (Bi
 // Bits.e
 BitsMap.mut a Bits.e (BitsMap.new t) default f = 
   (BitsMap.tie t (Maybe.some default) (BitsMap.new t) (BitsMap.new t))
-BitsMap.mut a Bits.e (BitsMap.tie t val lft rgt) default f = 
-  let value = (Maybe.case_with_default a val default)
-  let applied = (f value)
-  let new_val = (Maybe.if a (Maybe t) val (Maybe.none t) (Maybe.some t applied))
-  (BitsMap.tie t new_val lft rgt)
+BitsMap.mut a Bits.e (BitsMap.tie t (Maybe.none t) lft rgt) default f = 
+  (BitsMap.tie t (Maybe.none t) lft rgt)
+BitsMap.mut a Bits.e (BitsMap.tie t (Maybe.some t value) lft rgt) default f = 
+  (BitsMap.tie t (Maybe.some t (f value)) lft rgt)
 
 // Bits.o
 BitsMap.mut a (Bits.o pred) (BitsMap.new t) default f = 
